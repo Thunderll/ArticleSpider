@@ -14,7 +14,7 @@ class ArticlespiderPipeline(object):
 
 class ArticleImagePipeline(ImagesPipeline):
     def item_completed(self, results, item, info):
-        for ok, value in results:
-            image_file_path = value['path']
+        ok, value = results[0]
+        image_file_path = value['path']
         item['front_image_path'] = image_file_path
-        return super().item_completed(results, item, info)
+        return item
