@@ -66,11 +66,11 @@ ROBOTSTXT_OBEY = False
 # Configure item pipelines
 # See http://scrapy.readthedocs.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
-   'ArticleSpider.pipelines.ArticlespiderPipeline': 300,
+    'ArticleSpider.pipelines.ArticlespiderPipeline': 300,
     'ArticleSpider.pipelines.ArticleImagePipeline': 1,     #用于下载图片的管道
 }
 
-IMAGES_URLS_FIELD = 'front_image_url'    # 指定图片下载地址的字段
+IMAGES_URLS_FIELD = 'front_image_url'    # 指定图片url的字段
 PROJECT_DIR = os.path.abspath(os.path.dirname(__file__))
 IMAGES_STORE = os.path.join(PROJECT_DIR, 'images')  #图片存放路径
 
