@@ -66,8 +66,9 @@ ROBOTSTXT_OBEY = False
 # Configure item pipelines
 # See http://scrapy.readthedocs.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
-    'ArticleSpider.pipelines.JsonExporterPipeline': 2,
-    'ArticleSpider.pipelines.ArticleImagePipeline': 1,     #用于下载图片的管道
+    # 'ArticleSpider.pipelines.JsonExporterPipeline': 2,
+    # 'ArticleSpider.pipelines.ArticleImagePipeline': 1,     #用于下载图片的管道
+    'ArticleSpider.pipelines.MysqlPipeline': 1
 }
 
 IMAGES_URLS_FIELD = 'front_image_url'    # 指定图片url的字段

@@ -3,6 +3,7 @@ import re
 import scrapy
 from scrapy.http import Request
 from urllib import parse
+import datetime
 
 from ArticleSpider.items import JobboleArticleItem
 from ArticleSpider.utils.commen import get_md5
@@ -38,7 +39,13 @@ class JobboleSpider(scrapy.Spider):
 
         front_image_url = response.meta.get("front_image_url", "")  #文章封面图
         title = response.xpath("//div[@class='entry-header']/h1/text()").extract_first()
+
         create_date = response.xpath("//p[@class='entry-meta-hide-on-mobile']/text()").extract_first().replace("·", "").strip()
+        try:
+            create_date = datetime.datetime.strptime(create_date, '%Y/%m/%d')
+        except Exception as e:
+            create_date = datetime.datetime.now()
+
         praise_nums = int(response.xpath("//span[contains(@class,'vote-post-up')]/h10/text()").extract_first())
 
         fav_nums = response.xpath("//span[contains(@class,'bookmark-btn')]/text()").extract_first()
@@ -55,7 +62,7 @@ class JobboleSpider(scrapy.Spider):
         else:
             comment_nums = 0
 
-        content = response.xpath("//div[@class='entry']").extract_first()
+        # content = response.xpath("//div[@class='entry']").extract_first()
         tag_list = response.xpath("//p[@class='entry-meta-hide-on-mobile']/a/text()").extract()
         tag_list = [element for element in tag_list if not element.strip().endswith("评论")]
         tags = ",".join(tag_list)
@@ -71,6 +78,6 @@ class JobboleSpider(scrapy.Spider):
         article_item["comment_nums"] = comment_nums
         article_item["fav_nums"] = fav_nums
         article_item["tags"] = tags
-        article_item["content"] = content
+        # article_item["content"] = content
 
         yield article_item
