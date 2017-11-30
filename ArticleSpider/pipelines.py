@@ -128,7 +128,8 @@ class MysqlTwistedPipeline():
 
 class ArticleImagePipeline(ImagesPipeline):
     def item_completed(self, results, item, info):
-        ok, value = results[0]
-        image_file_path = value['path']
-        item['front_image_path'] = image_file_path
+        if 'front_image_url' in item:
+            ok, value = results[0]
+            image_file_path = value['path']
+            item['front_image_path'] = image_file_path
         return item
