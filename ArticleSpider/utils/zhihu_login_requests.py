@@ -49,7 +49,7 @@ def captcha_parse(session):
     response = session.get(CAPTCHA_URL_CN.format(randomNum), headers=HEADER, stream=True)
     if response.status_code == 200:
         with open('pic_captcha.gif', 'wb') as f:
-            response.raw.decode_content = True
+            # response.raw.decode_content = True
             shutil.copyfileobj(response.raw, f)
 
         positions = z.Recognize('pic_captcha.gif')
@@ -93,8 +93,9 @@ def zhihu_login(account, password):
         print('邮箱登录')
         post_url = 'https://www.zhihu.com/login/email'
         captcha = captcha_parse(session)
+        xsrf = get_xsrf(response)
         post_data = {
-            '_xsrf': get_xsrf(response),
+            '_xsrf': xsrf,
             'email': account,
             'password': password,
             'captcha_type': 'cn',
@@ -106,7 +107,7 @@ def zhihu_login(account, password):
 
 
 if __name__ == '__main__':
-    is_login()
+    # is_login()
     # get_index()
-    # zhihu_login('邮箱', '密码')
+    zhihu_login('1735464886@qq.com', 'lf1222')
     pass
