@@ -96,8 +96,6 @@ class JobboleSpider(scrapy.Spider):
         item_loader.add_xpath('fav_nums', "//span[contains(@class,'bookmark-btn')]/text()")
         item_loader.add_xpath('tags', "//p[@class='entry-meta-hide-on-mobile']/a/text()")
         # item_loader.add_xpath('content', "//div[@class='entry']")
-
         article_item = item_loader.load_item()
-
 
         yield article_item
