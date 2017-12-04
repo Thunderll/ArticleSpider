@@ -7,7 +7,6 @@ import datetime
 from scrapy.http import Request
 from scrapy.loader import ItemLoader
 
-
 from ArticleSpider.items import JobboleArticleItem, ArticleItemLoader
 from ArticleSpider.utils.commen import get_md5
 
@@ -24,6 +23,7 @@ class JobboleSpider(scrapy.Spider):
         """
         # 解析列表页中的所有文章url并交给scrapy下载后进行解析
         post_nodes = response.xpath("//div[@id='archive']/div[contains(@class,'floated-thumb')]/div[@class='post-thumb']/a")
+
         for post_node in post_nodes:
             image_url = post_node.xpath("img/@src").extract_first("")
             post_url = post_node.xpath("@href").extract_first("")
@@ -34,8 +34,8 @@ class JobboleSpider(scrapy.Spider):
         # 提取下一页并交给scrapy进行下载
         next_url = response.xpath("//a[@class='next page-numbers']/@href").extract_first()
         if next_url:
-            yield Request(url=parse.urljoin(response.url, next_url),
-                          callback=self.parse)
+            yield Request(url = parse.urljoin(response.url, next_url),
+                          callback = self.parse)
 
     def parse_detail(self, response):
         # 提取文章的具体字段

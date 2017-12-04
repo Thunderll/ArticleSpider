@@ -29,7 +29,6 @@ class JsonWithEncodingPipeline():
         self.file.write(lines)
         return item
 
-
     def spider_closed(self, spider):
         self.file.close()
 
@@ -54,7 +53,8 @@ class JsonExporterPipeline():
 class MysqlPipeline():
     # 采用同步机制写入mysql
     def __init__(self):
-        self.conn = MySQLdb.connect('127.0.0.1', 'root', 'lf1222', 'article_spider', charset='utf8', use_unicode=True)
+        self.conn = MySQLdb.connect('127.0.0.1', 'root', 'lf1222', 'article_spider',
+                                    charset='utf8', use_unicode=True)
         self.cursor = self.conn.cursor()
 
     def process_item(self, item, spider):
@@ -62,7 +62,11 @@ class MysqlPipeline():
             INSERT INTO jobbole_article(title, url, url_object_id, create_date, fav_nums)
             VALUES (%s, %s, %s, %s, %s)
         """
-        self.cursor.execute(insert_sql, (item['title'], item['url'], item['url_object_id'], item['create_date'], item['fav_nums']))
+        self.cursor.execute(insert_sql, (item['title'],
+                                         item['url'],
+                                         item['url_object_id'],
+                                         item['create_date'],
+                                         item['fav_nums']))
         self.conn.commit()
         return item
 
@@ -119,7 +123,11 @@ class MysqlTwistedPipeline():
             INSERT INTO jobbole_article(title, url, url_object_id, create_date, fav_nums)
             VALUES (%s, %s, %s, %s, %s)
         """
-        cursor.execute(insert_sql, (item['title'], item['url'], item['url_object_id'], item['create_date'], item['fav_nums']))
+        cursor.execute(insert_sql, (item['title'],
+                                    item['url'],
+                                    item['url_object_id'],
+                                    item['create_date'],
+                                    item['fav_nums']))
 
     def handle_error(self, failure, item, spider):
         # 处理异步插入的异常
