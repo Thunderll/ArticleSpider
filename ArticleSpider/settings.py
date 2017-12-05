@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
 import os
+import sys
+
+
+PROJECT_DIR = os.path.abspath(os.path.dirname(__file__))
+sys.path.append(PROJECT_DIR)
 
 # Scrapy settings for ArticleSpider project
 #
@@ -72,7 +77,7 @@ ITEM_PIPELINES = {
 }
 
 IMAGES_URLS_FIELD = 'front_image_url'    # 指定图片url的字段
-PROJECT_DIR = os.path.abspath(os.path.dirname(__file__))
+
 IMAGES_STORE = os.path.join(PROJECT_DIR, 'images')  #图片存放路径
 
 #规定下载图片的最小尺寸

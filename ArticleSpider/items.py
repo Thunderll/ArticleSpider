@@ -72,3 +72,32 @@ class JobboleArticleItem(scrapy.Item):
         output_processor=Join(','),
     )
     # content = scrapy.Field()
+
+
+class ZhihuQuestionItem(scrapy.Item):
+    # 知乎的问题 item
+    zhihu_id = scrapy.Field()
+    topics = scrapy.Field()
+    url = scrapy.Field()
+    title = scrapy.Field()
+    content = scrapy.Field()
+    answer_num = scrapy.Field()
+    comments_num = scrapy.Field()
+    watch_user_num = scrapy.Field()
+    click_num = scrapy.Field()
+    crawl_time = scrapy.Field()
+
+
+class ZhihuAnswerItem(scrapy.Item):
+    # 知乎问题的回答 Item
+    zhihu_id = scrapy.Field()
+    url = scrapy.Field()
+    question_id = scrapy.Field()
+    author_id = scrapy.Field()
+    content = scrapy.Field()
+    parise_num = scrapy.Field()
+    conmments_num = scrapy.Field()
+    created_time = scrapy.Field()
+    updated_time = scrapy.Field()
+    crawl_time = scrapy.Field()
+
