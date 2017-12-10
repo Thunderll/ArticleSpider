@@ -14,7 +14,7 @@ except:
 
 from items import ZhihuAnswerItem, ZhihuQuestionItem
 
-
+# 创建cookiejar对象
 cookie_jar = CookieJar()
 
 
@@ -92,6 +92,7 @@ class ZhihuSpider(scrapy.Spider):
         yield question_item
 
     def parse_answer(self, response):
+        # 处理question的answer
         answer_json = json.loads(response.text)
         is_end = answer_json['paging']['is_end']
         next_url = answer_json['paging']['next']
@@ -123,6 +124,7 @@ class ZhihuSpider(scrapy.Spider):
     def start_requests(self):
         # 这里包含爬虫用于爬取的第一个Request.
         try:
+            # 如果存在本地cookie,则直接使用
             with open('cookies.txt', 'r') as f:
                 cookiejar = f.read()
             p = re.compile(r'<Cookie (.*?) for .*?>')
@@ -130,10 +132,10 @@ class ZhihuSpider(scrapy.Spider):
             cookies = (cookie.split('=', 1) for cookie in cookies)
             cookies = dict(cookies)
             return [scrapy.Request('https://www.zhihu.com/#signin',
-                                   callback=self.check_login,
                                    cookies=cookies,
                                    headers=self.headers)]
         except:
+            # 如果本地没有cookie文件,则进行模拟登陆
             return [scrapy.Request('https://www.zhihu.com/#signin',
                                    callback=self.get_captcha,
                                    meta={'cookiejar': cookie_jar},
@@ -147,8 +149,8 @@ class ZhihuSpider(scrapy.Spider):
 
             post_data = {
                 '_xsrf': xsrf,
-                'email': '1735464886@qq.com',
-                'password': 'lf1222',
+                'email': 'xxxxxx',
+                'password': 'xxxxx',
                 'captcha_type': 'cn',
                 'captcha': ''
             }
@@ -156,8 +158,9 @@ class ZhihuSpider(scrapy.Spider):
             randomNum = str(int(time.time() * 1000))
             captcha_url_cn = 'https://www.zhihu.com/captcha.gif?r={0}&type=login&lang=cn'.format(randomNum)
 
+            # 提取cookie并向下传递
             cookie_jar = response.meta.get('cookiejar')
-            cookie_jar.extract_cookies(response, response.request)
+            # cookie_jar.extract_cookies(response, response.request)
             yield scrapy.Request(captcha_url_cn, headers=self.headers,
                                  meta={'post_data':post_data, 'cookiejar': cookie_jar},
                                  callback=self.login_after_captcha)
@@ -185,8 +188,10 @@ class ZhihuSpider(scrapy.Spider):
             captcha = '{{"img_size":[200,44],"input_points":{0}}}'.format(captcha['input_points'])
             post_data['captcha'] = captcha
 
+        # 提取cookie并向下传递
         cookie_jar = response.meta.get('cookiejar')
-        cookie_jar.extract_cookies(response, response.request)
+        # cookie_jar.extract_cookies(response, response.request)
+        cookie_jar.add_cookie_header(response.request)
         return [scrapy.FormRequest(
             url=post_url,
             formdata=post_data,
@@ -198,22 +203,15 @@ class ZhihuSpider(scrapy.Spider):
 
     def check_login(self, response):
         # 验证服务器响应,判断是否登录成功
-        try:
-            text_json = json.loads(response.text)
-            if not ('msg' in text_json and text_json['msg'] == '登录成功'):
-                return [scrapy.Request('https://www.zhihu.com/#signin',
-                                       callback=self.get_captcha,
-                                       meta={'cookiejar': cookie_jar},
-                                       headers=self.headers)]
-        except:
-            match_obj = re.match(r'.*?PushNotifications-icon.*?', response.text, re.DOTALL)
-            if not match_obj:
-                return [scrapy.Request('https://www.zhihu.com/#signin',
-                                       callback=self.get_captcha,
-                                       meta={'cookiejar': cookie_jar},
-                                       headers=self.headers)]
 
+        text_json = json.loads(response.text)
+        if not ('msg' in text_json and text_json['msg'] == '登录成功'):
+            return scrapy.Request('https://www.zhihu.com/#signin',
+                                   callback=self.get_captcha,
+                                   meta={'cookiejar': cookie_jar},
+                                   headers=self.headers)
         print('登录成功')
+        # 模拟登陆成功,提取cookie并保存到本地
         cookie_jar.extract_cookies(response, response.request)
         with open('cookies.txt', 'w') as f:
             for cookie in cookie_jar:
