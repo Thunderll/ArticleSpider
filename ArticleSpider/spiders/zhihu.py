@@ -75,7 +75,7 @@ class ZhihuSpider(scrapy.Spider):
         item_loader = ItemLoader(item=ZhihuQuestionItem(), response=response)
 
         item_loader.add_xpath('title', "//div[@class='QuestionHeader']//h1[@class='QuestionHeader-title']/text()")
-        item_loader.add_xpath('content', "//div[@class='QuestionHeader-detail']")
+        # item_loader.add_xpath('content', "//div[@class='QuestionHeader-detail']")
         item_loader.add_value('url', response.url)
         item_loader.add_value('zhihu_id', question_id)
         item_loader.add_xpath('answer_num', "//h4[@class='List-headerText']/span/text()")
@@ -106,8 +106,8 @@ class ZhihuSpider(scrapy.Spider):
             answer_item['question_id'] = answer['question']['id']
             answer_item['author_id'] = answer['author']['id'] if 'id' in answer['author'] else None
             answer_item['content'] = answer['content'] if 'content' in answer else None
-            answer_item['parise_num'] = answer['voteup_count']
-            answer_item['conmments_num'] = answer['comment_count']
+            answer_item['praise_num'] = answer['voteup_count']
+            answer_item['comments_num'] = answer['comment_count']
             answer_item['updated_time'] = answer['updated_time']
             answer_item['created_time'] = answer['created_time']
             answer['crawl_time'] = datetime.datetime.now()
@@ -131,8 +131,9 @@ class ZhihuSpider(scrapy.Spider):
             cookies = re.findall(p, cookiejar)
             cookies = (cookie.split('=', 1) for cookie in cookies)
             cookies = dict(cookies)
-            return [scrapy.Request('https://www.zhihu.com/#signin',
+            return [scrapy.Request('https://www.zhihu.com/inbox',
                                    cookies=cookies,
+                                   callback=self.check_cookie_usable,
                                    headers=self.headers)]
         except:
             # 如果本地没有cookie文件,则进行模拟登陆
@@ -149,8 +150,8 @@ class ZhihuSpider(scrapy.Spider):
 
             post_data = {
                 '_xsrf': xsrf,
-                'email': 'xxxxxx',
-                'password': 'xxxxx',
+                'email': 'xxx',
+                'password': 'xxx',
                 'captcha_type': 'cn',
                 'captcha': ''
             }
@@ -160,7 +161,7 @@ class ZhihuSpider(scrapy.Spider):
 
             # 提取cookie并向下传递
             cookie_jar = response.meta.get('cookiejar')
-            # cookie_jar.extract_cookies(response, response.request)
+            cookie_jar.extract_cookies(response, response.request)
             yield scrapy.Request(captcha_url_cn, headers=self.headers,
                                  meta={'post_data':post_data, 'cookiejar': cookie_jar},
                                  callback=self.login_after_captcha)
@@ -190,8 +191,7 @@ class ZhihuSpider(scrapy.Spider):
 
         # 提取cookie并向下传递
         cookie_jar = response.meta.get('cookiejar')
-        # cookie_jar.extract_cookies(response, response.request)
-        cookie_jar.add_cookie_header(response.request)
+        cookie_jar.extract_cookies(response, response.request)
         return [scrapy.FormRequest(
             url=post_url,
             formdata=post_data,
@@ -203,7 +203,6 @@ class ZhihuSpider(scrapy.Spider):
 
     def check_login(self, response):
         # 验证服务器响应,判断是否登录成功
-
         text_json = json.loads(response.text)
         if not ('msg' in text_json and text_json['msg'] == '登录成功'):
             return scrapy.Request('https://www.zhihu.com/#signin',
@@ -220,3 +219,15 @@ class ZhihuSpider(scrapy.Spider):
         for url in self.start_urls:
             # dont_filter参数表明该请求不要被调度器过滤,用于对同一个请求执行多次
             yield scrapy.Request(url, headers=self.headers, dont_filter=True)
+
+    def check_cookie_usable(self, response):
+        # 检查本地cookie是否有效,若无效则获取验证码模拟登陆
+        if response.status != 200:
+            return scrapy.Request('https://www.zhihu.com/#signin',
+                                   callback=self.get_captcha,
+                                   meta={'cookiejar': cookie_jar},
+                                   headers=self.headers)
+        else:
+            for url in self.start_urls:
+                # dont_filter参数表明该请求不要被调度器过滤,用于对同一个请求执行多次
+                yield scrapy.Request(url, headers=self.headers, dont_filter=True)
