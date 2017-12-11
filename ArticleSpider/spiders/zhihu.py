@@ -65,9 +65,10 @@ class ZhihuSpider(scrapy.Spider):
                                      callback=self.parse_question,
                                      meta={'question_id':question_id,}
                                      )
-            # else:
-                # 如果不是question页面则直接进一步跟踪
-                # yield scrapy.Request(url, headers=self.headers)
+                # break
+            else:
+                如果不是question页面则直接进一步跟踪
+                yield scrapy.Request(url, headers=self.headers)
 
     def parse_question(self, response):
         # 处理question页面,从页面中提取出具体的question item
@@ -105,12 +106,12 @@ class ZhihuSpider(scrapy.Spider):
             answer_item['url'] = answer['url']
             answer_item['question_id'] = answer['question']['id']
             answer_item['author_id'] = answer['author']['id'] if 'id' in answer['author'] else None
-            answer_item['content'] = answer['content'] if 'content' in answer else None
+            # answer_item['content'] = answer['content'] if 'content' in answer else None
             answer_item['praise_num'] = answer['voteup_count']
             answer_item['comments_num'] = answer['comment_count']
             answer_item['updated_time'] = answer['updated_time']
             answer_item['created_time'] = answer['created_time']
-            answer['crawl_time'] = datetime.datetime.now()
+            answer_item['crawl_time'] = datetime.datetime.now()
 
             yield answer_item
 
@@ -119,7 +120,7 @@ class ZhihuSpider(scrapy.Spider):
                                  headers=self.headers,
                                  callback=self.parse_answer
                                  )
-        pass
+
 
     def start_requests(self):
         # 这里包含爬虫用于爬取的第一个Request.

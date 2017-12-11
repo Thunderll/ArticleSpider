@@ -125,10 +125,26 @@ class ZhihuAnswerItem(scrapy.Item):
     url = scrapy.Field()
     question_id = scrapy.Field()
     author_id = scrapy.Field()
-    content = scrapy.Field()
+    # content = scrapy.Field()
     praise_num = scrapy.Field()
     comments_num = scrapy.Field()
     created_time = scrapy.Field()
     updated_time = scrapy.Field()
     crawl_time = scrapy.Field()
+
+    def get_insert_sql(self):
+        insert_sql = """
+            INSERT INTO zhihu_answer(zhihu_id, url, question_id, 
+            author_id, praise_num, comments_num, created_time, 
+            updated_time, crawl_time)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """
+        created_time = datetime.datetime.fromtimestamp(self['created_time']).strftime(SQL_DATETIME_FORMAT)
+        updated_time = datetime.datetime.fromtimestamp(self['updated_time']).strftime(SQL_DATETIME_FORMAT)
+
+        params = (self['zhihu_id'], self['url'], self['question_id'],
+                  self['author_id'], self['praise_num'], self['comments_num'],
+                  created_time, updated_time,
+                  self['crawl_time'].strftime(SQL_DATETIME_FORMAT))
+        return insert_sql, params
 
