@@ -73,6 +73,7 @@ class JobboleArticleItem(scrapy.Item):
             INSERT INTO jobbole_article(title, url, url_object_id,
              create_date, fav_nums)
             VALUES (%s, %s, %s, %s, %s)
+            ON DUPLICATE KEY UPDATE fav_nums=VALUES(fav_nums),
         """
         params = (self['title'], self['url'],self['url_object_id'],
                   self['create_date'],self['fav_nums'])
@@ -98,6 +99,9 @@ class ZhihuQuestionItem(scrapy.Item):
             answer_num, comments_num, watch_user_num, click_num, 
             crawl_time)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ON DUPLICATE KEY UPDATE answer_num=VALUES(answer_num),
+            comments_num=VALUES(comments_num), watch_user_num=VALUES(watch_user_num),
+            click_num=VALUES(click_num)
         """
         zhihu_id = int(''.join(self['zhihu_id']))
         topics = ','.join(self['topics'])
@@ -138,6 +142,8 @@ class ZhihuAnswerItem(scrapy.Item):
             author_id, praise_num, comments_num, created_time, 
             updated_time, crawl_time)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ON DUPLICATE KEY UPDATE praise_num=VALUES(praise_num),
+            comments_num=VALUES(comments_num), updated_time=VALUES(updated_time)
         """
         created_time = datetime.datetime.fromtimestamp(self['created_time']).strftime(SQL_DATETIME_FORMAT)
         updated_time = datetime.datetime.fromtimestamp(self['updated_time']).strftime(SQL_DATETIME_FORMAT)

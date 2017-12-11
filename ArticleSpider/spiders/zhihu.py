@@ -67,7 +67,7 @@ class ZhihuSpider(scrapy.Spider):
                                      )
                 # break
             else:
-                如果不是question页面则直接进一步跟踪
+                # 如果不是question页面则直接进一步跟踪
                 yield scrapy.Request(url, headers=self.headers)
 
     def parse_question(self, response):
