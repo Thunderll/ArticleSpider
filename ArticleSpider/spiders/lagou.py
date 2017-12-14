@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
+from datetime import datetime
 import scrapy
 from scrapy.linkextractors import LinkExtractor
 from scrapy.spiders import CrawlSpider, Rule
+
+from items import LagouJobItem, LagouJobItemLoader
+from utils.commen import get_md5
 
 
 def get_cookies():
@@ -36,9 +40,24 @@ class LagouSpider(CrawlSpider):
 
     def parse_job(self, response):
         # 解析拉钩网的职位
-        i = {}
-        #i['domain_id'] = response.xpath('//input[@id="sid"]/@value').extract()
-        #i['name'] = response.xpath('//div[@id="name"]').extract()
-        #i['description'] = response.xpath('//div[@id="description"]').extract()
-        return i
+        item_loader = LagouJobItemLoader(item=LagouJobItem(), response=response)
+        item_loader.add_xpath('title', "//div[@class='job-name']/@title")
+        item_loader.add_value('url', response.url)
+        item_loader.add_value('url_object_id', get_md5(response.url))
+        item_loader.add_xpath('salary', "//dd[@class='job_request']//span[@class='salary']/text()")
+        item_loader.add_xpath('job_city', "//dd[@class='job_request']/p/span[2]/text()")
+        item_loader.add_xpath('work_years', "//dd[@class='job_request']/p/span[3]/text()")
+        item_loader.add_xpath('degree_need', "//dd[@class='job_request']/p/span[4]/text()")
+        item_loader.add_xpath('job_type', "//dd[@class='job_request']/p/span[5]/text()")
+        item_loader.add_xpath('publish_time', "//p[@class='publish_time']/text()")
+        item_loader.add_xpath('tags', "//ul[contains(@class,'position-label')]/li/text()")
+        item_loader.add_xpath('job_advantage', "//span[@class='advantage']/following-sibling::p/text()")
+        item_loader.add_xpath('job_desc', "string(//dd[@class='job_bt']/div)")
+        item_loader.add_xpath('job_addr', "//div[@class='word_addr']")
+        item_loader.add_xpath('company_name', "//dl[@id='job_company']/dt/a/img/@alt")
+        item_loader.add_xpath('company_url', "//ul[@class='c_feature']/li[last()]/a/@href")
+        item_loader.add_value('crawl_time', datetime.now())
+
+        job_item = item_loader.load_item()
+        return job_item
 
