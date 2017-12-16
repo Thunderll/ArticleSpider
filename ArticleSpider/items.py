@@ -11,6 +11,7 @@ import re
 import scrapy
 from scrapy.loader.processors import MapCompose, TakeFirst, Join
 from scrapy.loader import ItemLoader
+from w3lib.html import remove_tags    # 去掉html中的标签
 
 from utils.commen import extract_nums
 from settings import SQL_DATE_FORMAT, SQL_DATETIME_FORMAT
@@ -22,6 +23,8 @@ class ArticlespiderItem(scrapy.Item):
     pass
 
 
+# -------------------- Jobbole Item --------------------
+
 def date_convert(value):
     # 格式化日期字符串为datetime对象
     try:
@@ -29,7 +32,6 @@ def date_convert(value):
     except Exception as e:
         create_date = datetime.datetime.now()
     return create_date
-
 
 
 def remove_comment_tags(value):
@@ -79,6 +81,8 @@ class JobboleArticleItem(scrapy.Item):
                   self['create_date'],self['fav_nums'])
         return insert_sql, params
 
+
+# --------------------Zhihu Item--------------------
 
 class ZhihuQuestionItem(scrapy.Item):
     # 知乎的问题 item
@@ -155,9 +159,11 @@ class ZhihuAnswerItem(scrapy.Item):
         return insert_sql, params
 
 
-class LagouJobItemLoader(ItemLoader):
-    # 自定义ItemLoader
-    default_output_processor = TakeFirst()
+# --------------------Lagou Item--------------------
+
+def remove_splash(value):
+    # 去掉工作城市的斜线
+    return value.replace('/', '')
 
 
 class LagouJobItem(scrapy.Item):
@@ -166,16 +172,27 @@ class LagouJobItem(scrapy.Item):
     url = scrapy.Field()
     url_object_id = scrapy.Field()
     salary = scrapy.Field()
-    job_city = scrapy.Field()
-    work_years = scrapy.Field()
-    degree_need = scrapy.Field()
+    job_city = scrapy.Field(
+        input_processor = MapCompose(remove_splash)
+    )
+    work_years = scrapy.Field(
+        input_processor=MapCompose(remove_splash)
+    )
+    degree_need = scrapy.Field(
+        input_processor=MapCompose(remove_splash)
+    )
     job_type = scrapy.Field()
     publish_time = scrapy.Field()
     job_advantage = scrapy.Field()
-    job_desc = scrapy.Field()
+    job_desc = scrapy.Field(
+        input_processor = MapCompose(remove_tags)
+    )
     job_addr = scrapy.Field()
     company_name = scrapy.Field()
     company_url = scrapy.Field()
-    tags = scrapy.Field()
+    tags = scrapy.Field(
+        input_processor = Join(',')
+    )
     crawl_time = scrapy.Field()
+
 
