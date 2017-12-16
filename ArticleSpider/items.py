@@ -167,7 +167,13 @@ def remove_splash(value):
 
 
 class LagouJobItem(scrapy.Item):
-    # 拉钩网职位信息
+    '''拉钩网职位信息
+
+    MapCompose:的用法类似高阶函数map, 对可迭代对象的每个元素依次调用传入的函数.
+    区别是MapCompose可同时传入多个函数.
+
+    w3lib.html.remove_tags: 去掉html中的标签
+    '''
     title = scrapy.Field()
     url = scrapy.Field()
     url_object_id = scrapy.Field()

@@ -5,7 +5,7 @@ from scrapy.linkextractors import LinkExtractor
 from scrapy.spiders import CrawlSpider, Rule
 from scrapy.loader import ItemLoader
 
-from items import LagouJobItem, LagouJobItemLoader
+from items import LagouJobItem
 from utils.commen import get_md5
 
 
@@ -41,7 +41,7 @@ class LagouSpider(CrawlSpider):
 
     def parse_job(self, response):
         # 解析拉钩网的职位
-        item_loader = LagouJobItemLoader(item=ItemLoader(), response=response)
+        item_loader = ItemLoader(item=LagouJobItem(), response=response)
         item_loader.add_xpath('title', "//div[@class='job-name']/@title")
         item_loader.add_value('url', response.url)
         item_loader.add_value('url_object_id', get_md5(response.url))
