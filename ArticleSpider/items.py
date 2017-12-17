@@ -75,14 +75,19 @@ class JobboleArticleItem(scrapy.Item):
             INSERT INTO jobbole_article(title, url, url_object_id,
              create_date, fav_nums)
             VALUES (%s, %s, %s, %s, %s)
-            ON DUPLICATE KEY UPDATE fav_nums=VALUES(fav_nums),
+            ON DUPLICATE KEY UPDATE fav_nums=VALUES(fav_nums)
         """
         params = (self['title'], self['url'],self['url_object_id'],
                   self['create_date'],self['fav_nums'])
         return insert_sql, params
 
 
-# --------------------Zhihu Item--------------------
+# -------------------- Zhihu Item --------------------
+
+def timestamp2str(value):
+    time = datetime.datetime.fromtimestamp(value).strftime(SQL_DATETIME_FORMAT)
+    return time
+
 
 class ZhihuQuestionItem(scrapy.Item):
     # 知乎的问题 item
@@ -136,9 +141,15 @@ class ZhihuAnswerItem(scrapy.Item):
     # content = scrapy.Field()
     praise_num = scrapy.Field()
     comments_num = scrapy.Field()
-    created_time = scrapy.Field()
-    updated_time = scrapy.Field()
-    crawl_time = scrapy.Field()
+    created_time = scrapy.Field(
+        input_processor = MapCompose(timestamp2str)
+    )
+    updated_time = scrapy.Field(
+        input_processor=MapCompose(timestamp2str)
+    )
+    crawl_time = scrapy.Field(
+        input_processor=MapCompose(lambda x: x.strftime(SQL_DATETIME_FORMAT))
+    )
 
     def get_insert_sql(self):
         insert_sql = """
@@ -159,11 +170,27 @@ class ZhihuAnswerItem(scrapy.Item):
         return insert_sql, params
 
 
-# --------------------Lagou Item--------------------
+# -------------------- Lagou Item --------------------
+
+class LagouItemLoader(ItemLoader):
+    # 自定义ItemLoader
+    default_output_processor = TakeFirst()
+
 
 def remove_splash(value):
     # 去掉工作城市的斜线
     return value.replace('/', '')
+
+
+def handle_jobaddr(value):
+    addr_list = value.split('\n')
+    addr_list = [item.strip() for item in addr_list if item.strip() != '查看地图']
+    return ''.join(addr_list)
+
+
+def handle_publish_time(value):
+    publish_time = value.split(' ')
+    return publish_time[0]
 
 
 class LagouJobItem(scrapy.Item):
@@ -188,17 +215,38 @@ class LagouJobItem(scrapy.Item):
         input_processor=MapCompose(remove_splash)
     )
     job_type = scrapy.Field()
-    publish_time = scrapy.Field()
+    publish_time = scrapy.Field(
+        input_processor = MapCompose(handle_publish_time)
+    )
     job_advantage = scrapy.Field()
     job_desc = scrapy.Field(
         input_processor = MapCompose(remove_tags)
     )
-    job_addr = scrapy.Field()
+    job_addr = scrapy.Field(
+        input_processor=MapCompose(remove_tags, handle_jobaddr)
+    )
     company_name = scrapy.Field()
     company_url = scrapy.Field()
     tags = scrapy.Field(
         input_processor = Join(',')
     )
-    crawl_time = scrapy.Field()
+    crawl_time = scrapy.Field(
+        input_processor = MapCompose(lambda x: x.strftime(SQL_DATETIME_FORMAT))
+    )
+
+    def get_insert_sql(self):
+        insert_sql = '''
+            INSERT INTO lagou_job(title, url, url_object_id, salary, job_city,
+            work_years, degree_need, job_type, publish_time, job_advantage,
+            job_desc, job_addr, company_name, company_url, tags, crawl_time)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ON DUPLICATE KEY UPDATE salary = VALUES(salary)
+        '''
+        params = (self['title'], self['url'], self['url_object_id'], self['salary'],
+                  self['job_city'], self['work_years'], self['degree_need'],
+                  self['job_type'], self['publish_time'], self['job_advantage'],
+                  self['job_desc'], self['job_addr'], self['company_name'],
+                  self['company_url'], self['tags'], self['crawl_time'])
+        return insert_sql, params
 
 
