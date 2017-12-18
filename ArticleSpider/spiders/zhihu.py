@@ -20,7 +20,7 @@ cookie_jar = CookieJar()
 
 class ZhihuSpider(scrapy.Spider):
     name = 'zhihu'
-    allowed_domains = ['www.zhihu.com']
+    allowed_domains = ['www.zhihu.com', 'zhihu.com']
     start_urls = ['https://www.zhihu.com/']
     # question的第一页answer的请求url
     start_answer_url = 'http://www.zhihu.com/api/v4/questions/{0}/answers?' \
@@ -41,8 +41,7 @@ class ZhihuSpider(scrapy.Spider):
     headers = {
         'HOST': 'www.zhihu.com',
         'Referer': 'https://www.zhihu.com',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit'\
-            '/537.36 (KHTML, like Gecko) Chrome/62.0.3202.94 Safari/537.36',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:57.0) Gecko/20100101 Firefox/57.0'
     }
 
     def parse(self, response):
@@ -135,12 +134,14 @@ class ZhihuSpider(scrapy.Spider):
             return [scrapy.Request('https://www.zhihu.com/inbox',
                                    cookies=cookies,
                                    callback=self.check_cookie_usable,
-                                   headers=self.headers)]
+                                   errback=self.handle_bad_request,
+                                   headers=self.headers
+                                   )]
         except:
             # 如果本地没有cookie文件,则进行模拟登陆
             return [scrapy.Request('https://www.zhihu.com/#signin',
                                    callback=self.get_captcha,
-                                   meta={'cookiejar': cookie_jar},
+                                   meta={'cookie': cookie_jar},
                                    headers=self.headers)]
 
     def get_captcha(self, response):
@@ -151,8 +152,8 @@ class ZhihuSpider(scrapy.Spider):
 
             post_data = {
                 '_xsrf': xsrf,
-                'email': 'xxx',
-                'password': 'xxx',
+                'email': '1735464886@qq.com',
+                'password': 'lf1222',
                 'captcha_type': 'cn',
                 'captcha': ''
             }
@@ -161,10 +162,10 @@ class ZhihuSpider(scrapy.Spider):
             captcha_url_cn = 'https://www.zhihu.com/captcha.gif?r={0}&type=login&lang=cn'.format(randomNum)
 
             # 提取cookie并向下传递
-            cookie_jar = response.meta.get('cookiejar')
+            cookie_jar = response.meta.get('cookie')
             cookie_jar.extract_cookies(response, response.request)
             yield scrapy.Request(captcha_url_cn, headers=self.headers,
-                                 meta={'post_data':post_data, 'cookiejar': cookie_jar},
+                                 meta={'post_data':post_data, 'cookie': cookie_jar},
                                  callback=self.login_after_captcha)
 
     def login_after_captcha(self, response):
@@ -191,14 +192,14 @@ class ZhihuSpider(scrapy.Spider):
             post_data['captcha'] = captcha
 
         # 提取cookie并向下传递
-        cookie_jar = response.meta.get('cookiejar')
+        cookie_jar = response.meta.get('cookie')
         cookie_jar.extract_cookies(response, response.request)
         return [scrapy.FormRequest(
             url=post_url,
             formdata=post_data,
             headers=self.headers,
             callback=self.check_login,
-            meta={'cookiejar': cookie_jar}
+            meta={'cookie': cookie_jar}
         )]
 
 
@@ -206,15 +207,19 @@ class ZhihuSpider(scrapy.Spider):
         # 验证服务器响应,判断是否登录成功
         text_json = json.loads(response.text)
         if not ('msg' in text_json and text_json['msg'] == '登录成功'):
-            return scrapy.Request('https://www.zhihu.com/#signin',
+            print('登录失败')
+            return [scrapy.Request('https://www.zhihu.com/#signin',
                                    callback=self.get_captcha,
-                                   meta={'cookiejar': cookie_jar},
-                                   headers=self.headers)
+                                   meta={'cookie': cookie_jar},
+                                   headers=self.headers,
+                                   dont_filter=True
+                    )]
         print('登录成功')
         # 模拟登陆成功,提取cookie并保存到本地
-        cookie_jar.extract_cookies(response, response.request)
+        cookies = response.meta['cookie']
+        cookies.extract_cookies(response, response.request)
         with open('cookies.txt', 'w') as f:
-            for cookie in cookie_jar:
+            for cookie in cookies:
                 f.write(str(cookie) + '\n')
 
         for url in self.start_urls:
@@ -223,12 +228,17 @@ class ZhihuSpider(scrapy.Spider):
 
     def check_cookie_usable(self, response):
         # 检查本地cookie是否有效,若无效则获取验证码模拟登陆
-        if response.status != 200:
-            return scrapy.Request('https://www.zhihu.com/#signin',
-                                   callback=self.get_captcha,
-                                   meta={'cookiejar': cookie_jar},
-                                   headers=self.headers)
+        if  response.status != 200:
+            self.handle_bad_request(response)
+
         else:
             for url in self.start_urls:
                 # dont_filter参数表明该请求不要被调度器过滤,用于对同一个请求执行多次
                 yield scrapy.Request(url, headers=self.headers, dont_filter=True)
+
+    def handle_bad_request(self, response):
+        return [scrapy.Request('https://www.zhihu.com/#signin',
+                               callback=self.get_captcha,
+                               meta={'cookie': cookie_jar},
+                               headers=self.headers
+                               )]
