@@ -28,10 +28,10 @@ class ArticlespiderItem(scrapy.Item):
 def date_convert(value):
     # 格式化日期字符串为datetime对象
     try:
-        create_date = datetime.datetime.strptime(value, '%Y/%m/%d')
+        create_date = datetime.datetime.strptime(value, '%Y/%m/%d').date()
     except Exception as e:
-        create_date = datetime.datetime.now()
-    return create_date
+        create_date = datetime.date.today()
+    return create_date.strftime(SQL_DATE_FORMAT)
 
 
 def remove_comment_tags(value):
