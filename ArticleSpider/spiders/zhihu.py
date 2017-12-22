@@ -126,7 +126,7 @@ class ZhihuSpider(scrapy.Spider):
         # 这里包含爬虫用于爬取的第一个Request.
         try:
             # 如果存在本地cookie,则直接使用
-            with open('cookies_.txt', 'r') as f:
+            with open('cookies.txt', 'r') as f:
                 cookiejar = f.read()
             p = re.compile(r'<Cookie (.*?) for .*?>')
             cookies = re.findall(p, cookiejar)
@@ -189,7 +189,7 @@ class ZhihuSpider(scrapy.Spider):
                 captcha["input_points"].append(tmp)
                 tmp = []
             captcha = '{{"img_size":[200,44],"input_points":{0}}}'.format(captcha['input_points'])
-            # post_data['captcha'] = captcha
+            post_data['captcha'] = captcha
 
         # 提取cookie并向下传递
         cookie_jar = response.meta.get('cookie')
