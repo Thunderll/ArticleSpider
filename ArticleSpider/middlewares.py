@@ -5,8 +5,11 @@
 # See documentation in:
 # http://doc.scrapy.org/en/latest/topics/spider-middleware.html
 
+import time
 from scrapy import signals
+from scrapy.http import HtmlResponse
 from fake_useragent import UserAgent
+from selenium import webdriver
 
 
 class ArticlespiderSpiderMiddleware(object):
@@ -72,3 +75,19 @@ class RandomUserAgentMiddleware:
         def get_ua():
             return getattr(self.ua, self.ua_type)
         request.headers.setdefault(b'User-Agent', get_ua())
+
+
+class JSPageMiddleware:
+    # 通过chrome请求动态网页
+
+    def process_request(self, request, spider):
+        if spider.name == 'jobbole':
+            spider.brower.get(request.url)
+            time.sleep(3)
+            print('访问:{}'.format(request.url))
+
+            return HtmlResponse(url=spider.brower.current_url,
+                                body=spider.brower.page_source,
+                                encoding='utf-8',
+                                request=request)
+
