@@ -109,5 +109,5 @@ def zhihu_login(account, password):
 if __name__ == '__main__':
     # is_login()
     # get_index()
-    zhihu_login('1735464886@qq.com', 'lf1222')
+    zhihu_login('xxxx', 'xxx')
     pass

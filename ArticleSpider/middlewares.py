@@ -79,7 +79,6 @@ class RandomUserAgentMiddleware:
 
 class JSPageMiddleware:
     # 通过chrome请求动态网页
-
     def process_request(self, request, spider):
         if spider.name == 'jobbole':
             spider.brower.get(request.url)

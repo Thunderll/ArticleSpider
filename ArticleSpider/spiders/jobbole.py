@@ -22,6 +22,7 @@ class JobboleSpider(scrapy.Spider):
     def __init__(self):
         self.brower = webdriver.Chrome(executable_path='E:/projects/spider/ArticleSpider/chromedriver.exe')
         super().__init__()
+        # 连接信号
         dispatcher.connect(self.spider_closed, signals.spider_closed)
 
     def spider_closed(self, spider):
