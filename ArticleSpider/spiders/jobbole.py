@@ -17,18 +17,26 @@ from ArticleSpider.utils.commen import get_md5
 class JobboleSpider(scrapy.Spider):
     name = 'jobbole'
     allowed_domains = ['blog.jobbole.com']
-    start_urls = ['http://blog.jobbole.com/all-posts/']
+    start_urls = ['http://blog.jobbole.com/dfgsdfg/']
+
+    # def __init__(self):
+    #     self.brower = webdriver.Chrome(executable_path='E:/projects/spider/ArticleSpider/chromedriver.exe')
+    #     super().__init__()
+    #     # 连接信号
+    #     dispatcher.connect(self.spider_closed, signals.spider_closed)
+    #
+    # def spider_closed(self, spider):
+    #     # 当爬虫退出时关闭chrome
+    #     print('spider closed')
+    #     self.brower.quit()
+
+    # 收集伯乐在线所有404的url以及404的页面数
+    handle_httpstatus_list = [404]   #指定不过滤的状态码
 
     def __init__(self):
-        self.brower = webdriver.Chrome(executable_path='E:/projects/spider/ArticleSpider/chromedriver.exe')
+        self.fail_urls = []
         super().__init__()
-        # 连接信号
-        dispatcher.connect(self.spider_closed, signals.spider_closed)
 
-    def spider_closed(self, spider):
-        # 当爬虫退出时关闭chrome
-        print('spider closed')
-        self.brower.quit()
 
     def parse(self, response):
         """
@@ -36,6 +44,10 @@ class JobboleSpider(scrapy.Spider):
         2. 获取下一页的url并交给scrapy进行下载,下载完成后交给parse
         """
         # 解析列表页中的所有文章url并交给scrapy下载后进行解析
+        if response.status == 404:
+            self.fail_urls.append(response.url)
+            self.crawler.stats.inc_value('failed_url')
+
         post_nodes = response.xpath("//div[@id='archive']/div[contains(@class,'floated-thumb')]/div[@class='post-thumb']/a")
 
         for post_node in post_nodes:
