@@ -35,7 +35,15 @@ class JobboleSpider(scrapy.Spider):
 
     def __init__(self):
         self.fail_urls = []
+        dispatcher.connect(self.handle_spider_closed, signals.spider_closed)
         super().__init__()
+
+    def handle_spider_closed(self):
+        '''
+        信号接收器
+        当spider关闭时收集所有的fail_urls
+        '''
+        self.crawler.stats.set_value('fail_urls', ','.join(self.fail_urls))
 
 
     def parse(self, response):
